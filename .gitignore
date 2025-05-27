@@ -1,0 +1,9 @@
+*.o
+*.out
+*.hex
+*.log
+*.exe
+build/
+dist/
+nbproject/private/
+.DS_Store
