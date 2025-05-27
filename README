@@ -1,0 +1,24 @@
+# Microprocessor Project
+
+This repository contains the code for our microprocessor-based security system project using the PIC16F877A.
+
+## Team Members
+- @shamhatahet
+- @DoaaKishek
+- @teammate2
+
+## Description
+Features:
+- Password input via keypad
+- Access check and validation
+- Servo motor control for locking/unlocking
+- LCD display in 4-bit mode
+- Buzzer alert for incorrect access
+
+## Tools Used
+- MPLAB X IDE
+- XC8 Compiler
+- Proteus 8 for simulation
+
+## How to Run
+Open the project in MPLAB X, compile with XC8, and upload to PIC16F877A.
