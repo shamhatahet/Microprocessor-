@@ -70,3 +70,12 @@ void main() {
             }
         }
         input_pass[4] = '\0';
+
+        if (strcmp(input_pass, correct_pass) == 0) {
+            Lcd_Clear();
+            Lcd_Set_Cursor(1, 1);
+            Lcd_String("Access Granted");
+            GREEN_LED = 0; RED1 = RED2 = RED3 = 1;
+            BUZZER = 1; __delay_ms(100); BUZZER = 0;
+
+            Servo_Forward();  // Open lock
