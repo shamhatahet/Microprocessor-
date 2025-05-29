@@ -109,3 +109,31 @@ void main() {
             if (attempts == 1) RED1 = 0;
             if (attempts == 2) RED2 = 0;
             if (attempts == 3) RED3 = 0;
+
+            if (attempts >= 3) {
+                Lcd_Clear(); Lcd_Set_Cursor(1, 1);
+                Lcd_String("LOCKED OUT");
+                while (1) {
+                    Locked_Out_Alarm();
+                }
+            }
+
+            __delay_ms(1000);
+            Lcd_Clear(); Lcd_Set_Cursor(1, 1);
+            Lcd_String("Enter Password:");
+        }
+    }
+}
+
+char Keypad_Read() {
+    const char row_mask[] = {0b11101111, 0b11011111, 0b10111111};
+    TRISB = 0x0F; PORTB = 0xF0;
+    for (int row = 0; row < 3; row++) {
+        PORTB = row_mask[row]; __delay_ms(5);
+        if (!(PORTB & 0x01)) { while (!(PORTB & 0x01)); return keypad[row][0]; }
+        if (!(PORTB & 0x02)) { while (!(PORTB & 0x02)); return keypad[row][1]; }
+        if (!(PORTB & 0x04)) { while (!(PORTB & 0x04)); return keypad[row][2]; }
+        if (!(PORTB & 0x08)) { while (!(PORTB & 0x08)); return keypad[row][3]; }
+    }
+    return 0;
+}
