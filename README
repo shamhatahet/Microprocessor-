@@ -5,15 +5,16 @@ This repository contains the code for our microprocessor-based security system p
 ## Team Members
 - @shamhatahet
 - @DoaaKishek
-- @teammate2
+- @asiyetanko
 
 ## Description
 Features:
 - Password input via keypad
 - Access check and validation
 - Servo motor control for locking/unlocking
-- LCD display in 4-bit mode
+- LCD in 4-bit mode
 - Buzzer alert for incorrect access
+- LED indication for correct/incorrect login attempts
 
 ## Tools Used
 - MPLAB X IDE
