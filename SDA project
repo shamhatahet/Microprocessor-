@@ -92,3 +92,20 @@ void main() {
                 }
             } 
 
+
+            GREEN_LED = 1;
+            Lcd_Clear(); Lcd_Set_Cursor(1, 1);
+            Lcd_String("Enter Password:");
+            attempts = 0;
+        } else {
+            attempts++;
+            Lcd_Clear();
+            Lcd_Set_Cursor(1, 1);
+            Lcd_String("Access Denied");
+            Lcd_Set_Cursor(2, 1);
+            Lcd_String("Try Again!");
+            Passive_Buzzer_Tone();
+
+            if (attempts == 1) RED1 = 0;
+            if (attempts == 2) RED2 = 0;
+            if (attempts == 3) RED3 = 0;
