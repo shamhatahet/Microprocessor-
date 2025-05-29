@@ -79,3 +79,16 @@ void main() {
             BUZZER = 1; __delay_ms(100); BUZZER = 0;
 
             Servo_Forward();  // Open lock
+
+            Lcd_Clear();
+            Lcd_Set_Cursor(1, 1);
+            Lcd_String("Press * to lock");
+
+            while (1) {
+                char lockKey = Keypad_Read();
+                if (lockKey == '*') {
+                    Servo_Backward();  // Close lock
+                    break;
+                }
+            } 
+
