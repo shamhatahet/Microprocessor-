@@ -16,6 +16,10 @@ Features:
 - Buzzer alert for incorrect access
 - LED indication for correct/incorrect login attempts
 
+This project utilises a 16x2 LCD to prompt the user to enter a 4-digit password using the keypad. If the password is incorrect, an "Access Denied" message is displayed, 
+and the first red LED lights up. If another incorrect attempt is made, the second red LED lights up. At the third incorrect attempt, the third red LED lights up, and the user 
+is locked out of the system. When the correct password is entered, the green LED lights up, the servo motor rotates, and an "Access Granted" message is displayed on the LCD.
+
 ## Tools Used
 - MPLAB X IDE
 - XC8 Compiler
