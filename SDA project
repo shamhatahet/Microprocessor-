@@ -71,7 +71,7 @@ void main() {
     Lcd_Set_Cursor(1, 1);
     Lcd_String("Enter Password:");
 
-    // Turn ON all RED LEDs and Green LED at the beginning
+    // Turn OFF all RED LEDs and Green LED at the beginning
     RED1 = RED2 = RED3 = 1;
     GREEN_LED = 1;
 
@@ -102,8 +102,8 @@ void main() {
             Lcd_Set_Cursor(1, 1);
             Lcd_String("Access Granted");
 
-            GREEN_LED = 0; // Turn OFF green LED to show access granted
-            RED1 = RED2 = RED3 = 1; // Reset red LEDs
+            GREEN_LED = 0; // Turn ON green LED to show access granted
+            RED1 = RED2 = RED3 = 1; // Make sure red LEDs are all off
             BUZZER = 1; __delay_ms(100); BUZZER = 0;
 
             Servo_Forward(); // Unlock door
@@ -121,7 +121,7 @@ void main() {
                 }
             }
 
-            GREEN_LED = 1; // Ready for next user
+            GREEN_LED = 1; // Off for next user
             Lcd_Clear(); Lcd_Set_Cursor(1, 1);
             Lcd_String("Enter Password:");
             attempts = 0; // Reset attempts
@@ -135,7 +135,7 @@ void main() {
             Lcd_String("Try Again!");
             Passive_Buzzer_Tone(); // Buzz warning
 
-            // Turn off LEDs one by one
+            // Turn ON LEDs one by one
             if (attempts == 1) RED1 = 0;
             if (attempts == 2) RED2 = 0;
             if (attempts == 3) RED3 = 0;
@@ -145,7 +145,7 @@ void main() {
                 Lcd_Clear(); Lcd_Set_Cursor(1, 1);
                 Lcd_String("LOCKED OUT");
                 while (1) {
-                    Locked_Out_Alarm(); // Keep buzzing and flashing
+                    Locked_Out_Alarm(); // Keep buzzing and flashing the red LEDs
                 }
             }
 
@@ -165,7 +165,7 @@ char Keypad_Read() {
     for (int row = 0; row < 3; row++) {
         PORTB = row_mask[row]; __delay_ms(5); // Pull one row low
 
-        // Check each column for low (pressed key)
+        // Check each column for low (pressed key), debounce
         if (!(PORTB & 0x01)) { while (!(PORTB & 0x01)); return keypad[row][0]; }
         if (!(PORTB & 0x02)) { while (!(PORTB & 0x02)); return keypad[row][1]; }
         if (!(PORTB & 0x04)) { while (!(PORTB & 0x04)); return keypad[row][2]; }
@@ -209,7 +209,7 @@ void Lcd_Init() {
     Lcd_Cmd(0x02); // 4-bit mode
     Lcd_Cmd(0x28); // 2-line, 5x7 matrix
     Lcd_Cmd(0x0C); // Display ON, cursor OFF
-    Lcd_Cmd(0x06); // Increment cursor
+    Lcd_Cmd(0x06); // Incrementing cursor
     Lcd_Cmd(0x01); // Clear screen
     __delay_ms(2);
 }
