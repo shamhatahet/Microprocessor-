@@ -1,18 +1,19 @@
-#include <xc.h>
-#include <string.h>
-#define _XTAL_FREQ 20000000
+#include <xc.h>             // Include header for PIC control
+#include <string.h>         // Include string functions (like strcmp)
+#define _XTAL_FREQ 20000000 // Define crystal frequency for delays
 
-// === CONFIG BITS ===
-#pragma config FOSC = HS
-#pragma config WDTE = OFF
-#pragma config PWRTE = ON
-#pragma config BOREN = OFF
-#pragma config LVP = OFF
-#pragma config CPD = OFF
-#pragma config WRT = OFF
-#pragma config CP = OFF
+// === CONFIGURATION BITS ===
+// These settings configure how the PIC starts up and works
+#pragma config FOSC = HS    // Use high-speed external oscillator
+#pragma config WDTE = OFF   // Watchdog timer disabled
+#pragma config PWRTE = ON   // Power-up timer enabled
+#pragma config BOREN = OFF  // Brown-out reset disabled
+#pragma config LVP = OFF    // Low-voltage programming off
+#pragma config CPD = OFF    // Data EEPROM code protection off
+#pragma config WRT = OFF    // Flash program memory write protection off
+#pragma config CP = OFF     // Flash program memory code protection off
 
-// === LCD Pins ===
+// === LCD PIN CONFIGURATION ===
 #define RS PORTDbits.RD0
 #define EN PORTDbits.RD1
 #define D4 PORTDbits.RD2
@@ -20,66 +21,94 @@
 #define D6 PORTDbits.RD4
 #define D7 PORTDbits.RD5
 
-// === IO ===
-#define BUZZER PORTAbits.RA0
-#define GREEN_LED PORTCbits.RC3
-#define RED1 PORTCbits.RC4
+// === IO Definitions ===
+#define BUZZER PORTAbits.RA0     // Passive buzzer connected to RA0
+#define GREEN_LED PORTCbits.RC3  // Green LED for access granted
+#define RED1 PORTCbits.RC4       // Red LEDs show failed attempts
 #define RED2 PORTCbits.RC5
 #define RED3 PORTCbits.RC6
-#define SERVO PORTCbits.RC2
+#define SERVO PORTCbits.RC2      // Servo motor connected to RC2
 
-char correct_pass[] = "2006";
-char input_pass[5] = "";
-char keypad[3][4] = {
+// === Variables ===
+char correct_pass[] = "2006"; // Set correct password
+char input_pass[5] = "";      // Store user input here
+char keypad[3][4] = {         // Keypad layout map
     {'1', '4', '7', '*'},
     {'2', '5', '8', '0'},
     {'3', '6', '9', '#'}
 };
-int attempts = 0;
+int attempts = 0;             // To count wrong tries
 
-void Lcd_Init(); void Lcd_Cmd(char); void Lcd_Char(char); void Lcd_String(const char *);
-void Lcd_Clear(); void Lcd_Set_Cursor(char, char); char Keypad_Read();
-void Servo_Forward(); void Servo_Backward(); void Passive_Buzzer_Tone();
+// === Function Prototypes ===
+void Lcd_Init();
+void Lcd_Cmd(char);
+void Lcd_Char(char);
+void Lcd_String(const char *);
+void Lcd_Clear();
+void Lcd_Set_Cursor(char, char);
+char Keypad_Read();
+void Servo_Forward();
+void Servo_Backward();
+void Passive_Buzzer_Tone();
 void Locked_Out_Alarm();
 
 void main() {
-    TRISA0 = 0;
-    TRISC2 = 0; TRISC3 = 0; TRISC4 = 0; TRISC5 = 0; TRISC6 = 0;
-    TRISD = 0x00; TRISB = 0x0F;
+    // === SET PIN DIRECTIONS ===
+    TRISA0 = 0; // RA0 as output (buzzer)
+    TRISC2 = 0; TRISC3 = 0; TRISC4 = 0; TRISC5 = 0; TRISC6 = 0; // Outputs
+    TRISD = 0x00; // Whole PORTD as output (LCD)
+    TRISB = 0x0F; // Lower 4 bits of PORTB as input for keypad
 
+    // === INITIALIZE PORTS ===
     PORTA = 0; PORTC = 0xFF; PORTD = 0;
-    OPTION_REGbits.nRBPU = 0; ADCON1 = 0x06;
+    OPTION_REGbits.nRBPU = 0; // Enable pull-ups for PORTB
+    ADCON1 = 0x06; // Configure all pins as digital
     __delay_ms(50);
 
-    Lcd_Init(); Lcd_Clear(); Lcd_Set_Cursor(1, 1);
+    // === LCD INITIAL SETUP ===
+    Lcd_Init(); 
+    Lcd_Clear(); 
+    Lcd_Set_Cursor(1, 1);
     Lcd_String("Enter Password:");
-    RED1 = RED2 = RED3 = 1; GREEN_LED = 1;
 
+    // Turn ON all RED LEDs and Green LED at the beginning
+    RED1 = RED2 = RED3 = 1;
+    GREEN_LED = 1;
+
+    // === MAIN LOOP ===
     while (1) {
-        char ch; int index = 0;
-        memset(input_pass, 0, sizeof(input_pass));
+        char ch;
+        int index = 0;
+        memset(input_pass, 0, sizeof(input_pass)); // Clear previous input
 
+        // === READ PASSWORD FROM KEYPAD ===
         while (index < 4) {
-            ch = Keypad_Read();
+            ch = Keypad_Read(); // Read a key
             if (ch != 0) {
-                input_pass[index++] = ch;
-                Lcd_Set_Cursor(2, index);
-                Lcd_Char('*');
-                while (Keypad_Read() != 0);
+                input_pass[index++] = ch; // Save pressed key
+                Lcd_Set_Cursor(2, index); // Move LCD cursor
+                Lcd_Char('*'); // Show * instead of the digit
+                while (Keypad_Read() != 0); // Wait until key is released
                 __delay_ms(150);
             }
         }
-        input_pass[4] = '\0';
 
+        input_pass[4] = '\0'; // Null-terminate the string
+
+        // === CHECK IF PASSWORD IS CORRECT ===
         if (strcmp(input_pass, correct_pass) == 0) {
+            // === Access Granted ===
             Lcd_Clear();
             Lcd_Set_Cursor(1, 1);
             Lcd_String("Access Granted");
-            GREEN_LED = 0; RED1 = RED2 = RED3 = 1;
+
+            GREEN_LED = 0; // Turn OFF green LED to show access granted
+            RED1 = RED2 = RED3 = 1; // Reset red LEDs
             BUZZER = 1; __delay_ms(100); BUZZER = 0;
 
-            Servo_Forward();  // Open lock
+            Servo_Forward(); // Unlock door
 
+            // Wait for user to press * to lock again
             Lcd_Clear();
             Lcd_Set_Cursor(1, 1);
             Lcd_String("Press * to lock");
@@ -87,34 +116,36 @@ void main() {
             while (1) {
                 char lockKey = Keypad_Read();
                 if (lockKey == '*') {
-                    Servo_Backward();  // Close lock
+                    Servo_Backward(); // Lock door
                     break;
                 }
-            } 
+            }
 
-
-            GREEN_LED = 1;
+            GREEN_LED = 1; // Ready for next user
             Lcd_Clear(); Lcd_Set_Cursor(1, 1);
             Lcd_String("Enter Password:");
-            attempts = 0;
+            attempts = 0; // Reset attempts
         } else {
-            attempts++;
+            // === Access Denied ===
+            attempts++; // Count the wrong try
             Lcd_Clear();
             Lcd_Set_Cursor(1, 1);
             Lcd_String("Access Denied");
             Lcd_Set_Cursor(2, 1);
             Lcd_String("Try Again!");
-            Passive_Buzzer_Tone();
+            Passive_Buzzer_Tone(); // Buzz warning
 
+            // Turn off LEDs one by one
             if (attempts == 1) RED1 = 0;
             if (attempts == 2) RED2 = 0;
             if (attempts == 3) RED3 = 0;
 
+            // === LOCKED OUT AFTER 3 WRONG ATTEMPTS ===
             if (attempts >= 3) {
                 Lcd_Clear(); Lcd_Set_Cursor(1, 1);
                 Lcd_String("LOCKED OUT");
                 while (1) {
-                    Locked_Out_Alarm();
+                    Locked_Out_Alarm(); // Keep buzzing and flashing
                 }
             }
 
@@ -125,78 +156,109 @@ void main() {
     }
 }
 
+// === KEYPAD FUNCTION TO DETECT KEY PRESSED ===
 char Keypad_Read() {
-    const char row_mask[] = {0b11101111, 0b11011111, 0b10111111};
-    TRISB = 0x0F; PORTB = 0xF0;
+    const char row_mask[] = {0b11101111, 0b11011111, 0b10111111}; // Rows low one at a time
+    TRISB = 0x0F; // RB0-RB3 as input, RB4-RB7 as output
+    PORTB = 0xF0; // Initial state
+
     for (int row = 0; row < 3; row++) {
-        PORTB = row_mask[row]; __delay_ms(5);
+        PORTB = row_mask[row]; __delay_ms(5); // Pull one row low
+
+        // Check each column for low (pressed key)
         if (!(PORTB & 0x01)) { while (!(PORTB & 0x01)); return keypad[row][0]; }
         if (!(PORTB & 0x02)) { while (!(PORTB & 0x02)); return keypad[row][1]; }
         if (!(PORTB & 0x04)) { while (!(PORTB & 0x04)); return keypad[row][2]; }
         if (!(PORTB & 0x08)) { while (!(PORTB & 0x08)); return keypad[row][3]; }
     }
-    return 0;
+
+    return 0; // No key pressed
 }
+
+// === LCD COMMAND FUNCTION ===
 void Lcd_Cmd(char cmd) {
-    RS = 0;
+    RS = 0; // Command mode
     D4 = (cmd >> 4) & 1; D5 = (cmd >> 5) & 1;
     D6 = (cmd >> 6) & 1; D7 = (cmd >> 7) & 1;
     EN = 1; __delay_ms(1); EN = 0;
+
     D4 = cmd & 1; D5 = (cmd >> 1) & 1;
     D6 = (cmd >> 2) & 1; D7 = (cmd >> 3) & 1;
     EN = 1; __delay_ms(1); EN = 0;
+
     __delay_ms(2);
 }
 
+// === LCD DATA FUNCTION ===
 void Lcd_Char(char data) {
-    RS = 1;
+    RS = 1; // Data mode
     D4 = (data >> 4) & 1; D5 = (data >> 5) & 1;
     D6 = (data >> 6) & 1; D7 = (data >> 7) & 1;
     EN = 1; __delay_ms(1); EN = 0;
+
     D4 = data & 1; D5 = (data >> 1) & 1;
     D6 = (data >> 2) & 1; D7 = (data >> 3) & 1;
     EN = 1; __delay_ms(1); EN = 0;
+
     __delay_ms(2);
 }
 
+// === INITIALIZE LCD ===
 void Lcd_Init() {
-    __delay_ms(20);
-    Lcd_Cmd(0x02); Lcd_Cmd(0x28); Lcd_Cmd(0x0C);
-    Lcd_Cmd(0x06); Lcd_Cmd(0x01); __delay_ms(2);
+    __delay_ms(20); // Wait for LCD to power up
+    Lcd_Cmd(0x02); // 4-bit mode
+    Lcd_Cmd(0x28); // 2-line, 5x7 matrix
+    Lcd_Cmd(0x0C); // Display ON, cursor OFF
+    Lcd_Cmd(0x06); // Increment cursor
+    Lcd_Cmd(0x01); // Clear screen
+    __delay_ms(2);
 }
 
+// === SET CURSOR POSITION ON LCD ===
 void Lcd_Set_Cursor(char row, char pos) {
-    if (row == 1) Lcd_Cmd(0x80 + pos - 1);
-    else if (row == 2) Lcd_Cmd(0xC0 + pos - 1);
+    if (row == 1) Lcd_Cmd(0x80 + pos - 1); // First line
+    else if (row == 2) Lcd_Cmd(0xC0 + pos - 1); // Second line
 }
 
-void Lcd_String(const char *str) { while (*str) Lcd_Char(*str++); }
-void Lcd_Clear() { Lcd_Cmd(0x01); __delay_ms(2); }
+// === DISPLAY STRING ON LCD ===
+void Lcd_String(const char *str) {
+    while (*str) Lcd_Char(*str++);
+}
 
+// === CLEAR LCD ===
+void Lcd_Clear() {
+    Lcd_Cmd(0x01); __delay_ms(2);
+}
+
+// === ROTATE SERVO FORWARD (Unlock) ===
 void Servo_Forward() {
     for (int i = 0; i < 50; i++) {
         SERVO = 1;
-        __delay_us(2000);  // Full forward pulse
+        __delay_us(2000); // Pulse for forward
         SERVO = 0;
         __delay_ms(18);
     }
 }
 
+// === ROTATE SERVO BACKWARD (Lock) ===
 void Servo_Backward() {
     for (int i = 0; i < 50; i++) {
         SERVO = 1;
-        __delay_us(1000);  // Full backward pulse
+        __delay_us(1000); // Pulse for backward
         SERVO = 0;
         __delay_ms(19);
     }
 }
 
+// === BUZZER TONE FOR WRONG PASSWORD ===
 void Passive_Buzzer_Tone() {
     for (int i = 0; i < 200; i++) {
-        BUZZER = 1; __delay_us(500); BUZZER = 0; __delay_us(500);
+        BUZZER = 1; __delay_us(500);
+        BUZZER = 0; __delay_us(500);
     }
 }
 
+// === BUZZER & LED FLASHING FOR LOCKOUT ===
 void Locked_Out_Alarm() {
     for (int i = 0; i < 10; i++) {
         RED1 = RED2 = RED3 = 0;
